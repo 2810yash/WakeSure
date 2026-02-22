@@ -12,100 +12,148 @@ class AlarmScreen extends StatefulWidget {
 }
 
 class _AlarmScreenState extends State<AlarmScreen> {
-
   final FlutterTts flutterTts = FlutterTts();
   final SpeechToText _speechToText = SpeechToText();
   final AudioPlayer player = AudioPlayer();
 
-  bool _speechEnabled = false;
-  String _wordsSpoken = "Tap the mic and say something...";
-  late DateTime now;
+  bool _isAwakeConfirmed = false;
+  String _wordsSpoken = "Waiting...";
   String time = '';
+  String askString = 'Are you awake? Say, I am awake, to stop the alarm.';
+  bool _isListening = false;
+  bool _responseReceived = false;
+
 
   @override
   void initState() {
     super.initState();
     _initSpeech();
-    now = DateTime.now();
-    time = "${now.hour}:${now.minute.toString().padLeft(2, '0')}";
+    time =
+        "${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}";
     playAlarm();
   }
 
-  void playAlarm() async{
+  void _initSpeech() async {
+    await _speechToText.initialize(
+      onStatus: (status) {
+        print("Status: $status");
+        if (status == 'done' && !_isAwakeConfirmed) {
+          playAlarm();
+        }
+      },
+    );
+  }
+
+  void playAlarm() async {
+    setState(() => _isAwakeConfirmed = false);
     await player.setReleaseMode(ReleaseMode.loop);
     await player.play(AssetSource('alarm.mp3'));
   }
-  void stopAlarm() async{
+
+  void stopAlarm() async {
     await player.stop();
-    Future.delayed(Duration(seconds: 3), () {
-      _speak();
-    });
-  }
-  /// Initialize Speech to Text
-  void _initSpeech() async {
-    _speechEnabled = await _speechToText.initialize();
-    setState(() {});
-  }
-  /// Start listening
-  void _startListening() async {
-    await _speechToText.listen(onResult: _onSpeechResult);
-    setState(() {});
-  }
-  /// Stop listening
-  void _stopListening() async {
-    await _speechToText.stop();
-    setState(() {});
-  }
-  /// This callback triggers as you speak
-  void _onSpeechResult(SpeechRecognitionResult result) {
-    setState(() {
-      _wordsSpoken = result.recognizedWords;
-      print("\n\n$_wordsSpoken\n\n");
-      _checkSpeech(_wordsSpoken);
+
+    await Future.delayed(const Duration(seconds: 2), () {
+      _voiceChallenge(askString);
     });
   }
 
-  void _checkSpeech(String words){
-    words = words.toLowerCase();
-    if (words.contains("yes") || words.contains("i am awake")) {
-      print("\n\nUser is awake!\n\n");
-    } else {
-      playAlarm();
-    }
+  void restartAlarm() async {
+    await player.stop();
+    await flutterTts.speak("You are not awake. Alarm restarting");
+    await Future.delayed(Duration(seconds: 2));
+    playAlarm();
   }
 
-  Future<void> _speak() async {
+  Future<void> _voiceChallenge(String sayString) async {
     await flutterTts.setEngine("com.google.android.tts");
     await flutterTts.setLanguage("en-IN");
     await flutterTts.setSpeechRate(0.4);
     await flutterTts.setPitch(1.0);
-    await flutterTts.speak("Are You Awake?");
-    await Future.delayed(Duration(seconds: 3));
-    await flutterTts.speak("Answer with, I am awake");
-    await Future.delayed(Duration(seconds: 1));
+    await flutterTts.setSpeechRate(0.4);
+
+    await flutterTts.awaitSpeakCompletion(true);
+    await flutterTts.speak(sayString);
+
     _startListening();
+  }
+
+  void _startListening() async {
+    _responseReceived = false;
+    _isListening = true;
+
+    await _speechToText.listen(
+      onResult: _onSpeechResult,
+      listenFor: const Duration(seconds: 7),
+    );
+
+    // Wait for response window
+    await Future.delayed(const Duration(seconds: 8), () {
+      if (!_responseReceived && !_isAwakeConfirmed) {
+        print("No response. Restarting alarm...");
+        restartAlarm();
+      }
+    });
+
+    setState(() {});
+  }
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      _wordsSpoken = result.recognizedWords;
+    });
+
+    if (result.finalResult) {
+      _responseReceived = true;
+      _checkWakefulness(result.recognizedWords);
+    }
+  }
+
+  void _checkWakefulness(String words) {
+    String voiceInput = words.toLowerCase();
+
+    if (voiceInput.contains("i am awake") ||
+        voiceInput.contains("awake") ||
+        voiceInput.contains("yes")) {
+      setState(() {
+        _isAwakeConfirmed = true;
+        _wordsSpoken = "Wake up confirmed!";
+      });
+
+      print("User is officially awake.");
+
+      flutterTts.speak("Good morning!");
+    } else {
+      print("Wrong answer. Restarting alarm...");
+      restartAlarm();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Alarm")),
+      appBar: AppBar(title: const Text("WakeSure")),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(time),
-            const SizedBox(height: 20.0),
-            ElevatedButton(onPressed: stopAlarm, child: Icon(Icons.close))
+            Text(time, style: const TextStyle(fontSize: 48)),
+            const SizedBox(height: 20),
+            Text(
+              "Heard: $_wordsSpoken",
+              style: const TextStyle(color: Colors.blueGrey),
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: stopAlarm,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(20),
+              ),
+              child: const Icon(Icons.stop, size: 50),
+            ),
           ],
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   // onPressed: _speechToText.isNotListening ? _startListening : _stopListening,
-      //   onPressed: stopAlarm,
-      //   tooltip: 'Listen',
-      //   child: Icon(_speechToText.isNotListening ? Icons.mic_off : Icons.mic),
-      // ),
     );
   }
 }
