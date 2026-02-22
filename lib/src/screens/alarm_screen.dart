@@ -91,6 +91,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
     await Future.delayed(const Duration(seconds: 8), () {
       if (!_responseReceived && !_isAwakeConfirmed) {
         print("No response. Restarting alarm...");
+
+        player.stop();
         restartAlarm();
       }
     });
@@ -111,7 +113,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
 
   void _checkWakefulness(String words) {
     String voiceInput = words.toLowerCase();
-
+    print("\n\n$voiceInput\n\n");
     if (voiceInput.contains("i am awake") ||
         voiceInput.contains("awake") ||
         voiceInput.contains("yes")) {
@@ -125,6 +127,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
       flutterTts.speak("Good morning!");
     } else {
       print("Wrong answer. Restarting alarm...");
+
+      player.stop();
       restartAlarm();
     }
   }
