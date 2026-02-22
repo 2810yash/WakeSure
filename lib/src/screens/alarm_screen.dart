@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:wake_sure/src/notifications/notification_helper.dart';
 
 class AlarmScreen extends StatefulWidget {
   const AlarmScreen({super.key});
@@ -154,6 +155,15 @@ class _AlarmScreenState extends State<AlarmScreen> {
                 padding: const EdgeInsets.all(20),
               ),
               child: const Icon(Icons.stop, size: 50),
+            ),
+            ElevatedButton(
+              onPressed: (){
+                NotificationHelper.schedulNotifications('new now', 'first try');
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(20),
+              ),
+              child: const Icon(Icons.send, size: 60),
             ),
           ],
         ),

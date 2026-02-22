@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:wake_sure/src/notifications/notification_helper.dart';
 import 'package:wake_sure/src/screens/alarm_screen.dart';
 
-void main(){
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  NotificationHelper.init();
   runApp(const MyApp());
 }
 
