@@ -24,13 +24,11 @@ class _AlarmScreenState extends State<AlarmScreen> {
   bool _isListening = false;
   bool _responseReceived = false;
 
-
   @override
   void initState() {
     super.initState();
     _initSpeech();
-    time =
-        "${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}";
+    time = "${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}";
     playAlarm();
   }
 
@@ -158,7 +156,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
             ),
             ElevatedButton(
               onPressed: (){
-                NotificationHelper.schedulNotifications('new now', 'first try');
+                // NotificationHelper.scheduleNotification('new now', 'first try');
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.all(20),

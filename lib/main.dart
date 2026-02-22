@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:wake_sure/src/notifications/notification_helper.dart';
 import 'package:wake_sure/src/screens/alarm_screen.dart';
+import 'package:wake_sure/src/screens/set_alarm_screen.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,9 +17,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: AlarmScreen(),
+      home: SetAlarmScreen(),
     );
   }
 }
