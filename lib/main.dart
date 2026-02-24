@@ -5,14 +5,22 @@ import 'package:wake_sure/src/screens/set_alarm_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  NotificationHelper.init();
-  runApp(const MyApp());
+
+  await NotificationHelper.init();
+
+  final details =
+  await NotificationHelper.notifications.getNotificationAppLaunchDetails();
+
+  runApp(MyApp(
+    launchedFromAlarm: details?.didNotificationLaunchApp ?? false,
+  ));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool launchedFromAlarm;
+  const MyApp({super.key, required this.launchedFromAlarm});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +28,9 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: SetAlarmScreen(),
+      home: launchedFromAlarm
+          ? const AlarmScreen()
+          : const SetAlarmScreen(),
     );
   }
 }

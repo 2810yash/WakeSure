@@ -6,49 +6,42 @@ import '../../main.dart';
 import '../screens/alarm_screen.dart';
 
 class NotificationHelper {
-  static final _notifications = FlutterLocalNotificationsPlugin();
+  static final notifications = FlutterLocalNotificationsPlugin();
 
-  static void init() {
-    _notifications.initialize(
-      settings: InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-        iOS: DarwinInitializationSettings(),
-      ),
-      onDidReceiveNotificationResponse: (details) {
-        navigatorKey.currentState?.push(
+  static Future<void> init() async {
+
+    const AndroidInitializationSettings androidSettings =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings =
+    InitializationSettings(
+      android: androidSettings,
+    );
+
+    const AndroidNotificationChannel androidChannel =
+    AndroidNotificationChannel(
+      'alarm_channel',
+      'Alarm Notifications',
+      description: 'Channel for alarm notifications',
+      importance: Importance.max,
+    );
+
+    await notifications
+        .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(androidChannel);
+
+    await notifications.initialize(
+      settings: initializationSettings,
+      onDidReceiveNotificationResponse: (response) {
+        navigatorKey.currentState?.pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const AlarmScreen()),
+              (route) => false,
         );
       },
     );
+
     tz.initializeTimeZones();
-  }
-
-  static Future<void> scheduleNotification(String title, String body) async {
-    final androidDetails = AndroidNotificationDetails(
-      'important_channel',
-      'Important Notifications',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-
-    final iosDetails = DarwinNotificationDetails();
-
-    final details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    final now = tz.TZDateTime.now(tz.local);
-    final scheduledDate = now.add(const Duration(seconds: 5));
-
-    await _notifications.zonedSchedule(
-      id: 0,
-      title: title,
-      body: body,
-      scheduledDate: scheduledDate,
-      notificationDetails: details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-    );
   }
 
   static Future<void> scheduleAlarm(DateTime scheduledTime) async {
@@ -57,7 +50,10 @@ class NotificationHelper {
       'Alarm Notifications',
       importance: Importance.max,
       priority: Priority.high,
+      category: AndroidNotificationCategory.alarm,
       fullScreenIntent: true,
+      visibility: NotificationVisibility.public,
+      ticker: 'alarm',
     );
 
     final iosDetails = DarwinNotificationDetails();
@@ -69,7 +65,7 @@ class NotificationHelper {
 
     final tzTime = tz.TZDateTime.from(scheduledTime, tz.local);
 
-    await _notifications.zonedSchedule(
+    await notifications.zonedSchedule(
       id:0,
       title: 'WakeSure Alarm',
       body: 'Time to wake up!',

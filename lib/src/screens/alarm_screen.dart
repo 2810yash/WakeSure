@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:wake_sure/src/notifications/notification_helper.dart';
+import 'package:wake_sure/src/screens/set_alarm_screen.dart';
 
 class AlarmScreen extends StatefulWidget {
   const AlarmScreen({super.key});
@@ -21,7 +21,6 @@ class _AlarmScreenState extends State<AlarmScreen> {
   String _wordsSpoken = "Waiting...";
   String time = '';
   String askString = 'Are you awake? Say, I am awake, to stop the alarm.';
-  bool _isListening = false;
   bool _responseReceived = false;
 
   @override
@@ -52,7 +51,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
   void stopAlarm() async {
     await player.stop();
 
-    await Future.delayed(const Duration(seconds: 2), () {
+    await Future.delayed(const Duration(seconds: 20), () {
       _voiceChallenge(askString);
     });
   }
@@ -79,7 +78,6 @@ class _AlarmScreenState extends State<AlarmScreen> {
 
   void _startListening() async {
     _responseReceived = false;
-    _isListening = true;
 
     await _speechToText.listen(
       onResult: _onSpeechResult,
@@ -124,6 +122,10 @@ class _AlarmScreenState extends State<AlarmScreen> {
       print("User is officially awake.");
 
       flutterTts.speak("Good morning!");
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SetAlarmScreen()),
+      );
     } else {
       print("Wrong answer. Restarting alarm...");
 
@@ -153,15 +155,6 @@ class _AlarmScreenState extends State<AlarmScreen> {
                 padding: const EdgeInsets.all(20),
               ),
               child: const Icon(Icons.stop, size: 50),
-            ),
-            ElevatedButton(
-              onPressed: (){
-                // NotificationHelper.scheduleNotification('new now', 'first try');
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.all(20),
-              ),
-              child: const Icon(Icons.send, size: 60),
             ),
           ],
         ),
