@@ -20,10 +20,13 @@ class NotificationHelper {
 
     const AndroidNotificationChannel androidChannel =
     AndroidNotificationChannel(
-      'alarm_channel',
+      'alarm_channel_v2',
       'Alarm Notifications',
       description: 'Channel for alarm notifications',
       importance: Importance.max,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('alarm'),
+      audioAttributesUsage: AudioAttributesUsage.alarm,
     );
 
     await notifications
@@ -46,7 +49,7 @@ class NotificationHelper {
 
   static Future<void> scheduleAlarm(DateTime scheduledTime) async {
     final androidDetails = AndroidNotificationDetails(
-      'alarm_channel',
+      'alarm_channel_v2',
       'Alarm Notifications',
       importance: Importance.max,
       priority: Priority.high,
@@ -54,6 +57,9 @@ class NotificationHelper {
       fullScreenIntent: true,
       visibility: NotificationVisibility.public,
       ticker: 'alarm',
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('alarm'),
+      audioAttributesUsage: AudioAttributesUsage.alarm,
     );
 
     final iosDetails = DarwinNotificationDetails();
